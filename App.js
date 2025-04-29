@@ -2,14 +2,24 @@ import React from 'react';
 import { View, Text, StyleSheet, Button } from 'react-native';
 import { NavigationContainer } from '@react-navigation/native';
 import { createStackNavigator } from '@react-navigation/stack';
+import { TransactionsProvider, useTransactions } from './contexts/TransactionsContext'; // Importando o contexto
 import TransacaoScreen from './screens/TransacaoScreen'; // Importando a tela de transações
+import RelatorioScreen from './screens/RelatorioScreen'; // Se você for adicionar uma tela de relatórios
 
 const Stack = createStackNavigator();
 
 function HomeScreen({ navigation }) {
-  const receita = 1500.00; // Exemplo de receita
-  const despesas = 550.00; // Exemplo de despesas
-  const saldo = receita - despesas; // Calculando o saldo
+  const { transactions } = useTransactions(); // Pega as transações do contexto
+
+  const receita = transactions
+    .filter(t => t.tipo === 'receita')
+    .reduce((acc, curr) => acc + parseFloat(curr.valor), 0);
+
+  const despesas = transactions
+    .filter(t => t.tipo === 'despesa')
+    .reduce((acc, curr) => acc + parseFloat(curr.valor), 0);
+
+  const saldo = receita - despesas;
 
   return (
     <View style={styles.container}>
@@ -26,7 +36,7 @@ function HomeScreen({ navigation }) {
       {/* Botões de Ação */}
       <View style={styles.buttonContainer}>
         <Button title="Adicionar Transação" onPress={() => navigation.navigate('Transacao')} />
-        <Button title="Ver Relatórios" onPress={() => alert('Abrir Relatórios')} />
+        <Button title="Ver Relatórios" onPress={() => navigation.navigate('Relatorio')} />
       </View>
     </View>
   );
@@ -34,12 +44,15 @@ function HomeScreen({ navigation }) {
 
 export default function App() {
   return (
-    <NavigationContainer>
-      <Stack.Navigator initialRouteName="Home">
-        <Stack.Screen name="Home" component={HomeScreen} options={{ title: 'Controle de Gastos' }} />
-        <Stack.Screen name="Transacao" component={TransacaoScreen} options={{ title: 'Adicionar Transação' }} />
-      </Stack.Navigator>
-    </NavigationContainer>
+    <TransactionsProvider> {/* Envolve o app no Provider */}
+      <NavigationContainer>
+        <Stack.Navigator initialRouteName="Home">
+          <Stack.Screen name="Home" component={HomeScreen} options={{ title: 'Controle de Gastos' }} />
+          <Stack.Screen name="Transacao" component={TransacaoScreen} options={{ title: 'Adicionar Transação' }} />
+          <Stack.Screen name="Relatorio" component={RelatorioScreen} options={{ title: 'Relatórios' }} />
+        </Stack.Navigator>
+      </NavigationContainer>
+    </TransactionsProvider>
   );
 }
 
@@ -75,13 +88,13 @@ const styles = StyleSheet.create({
     marginBottom: 10,
   },
   revenue: {
-    color: '#FFA500', // Laranja mais visível
+    color: '#FFA500', // Laranja para receita
   },
   expense: {
-    color: 'red',
+    color: 'red', // Vermelho para despesas
   },
   balance: {
-    color: 'green',
+    color: 'green', // Verde para saldo
   },
   buttonContainer: {
     flexDirection: 'row',

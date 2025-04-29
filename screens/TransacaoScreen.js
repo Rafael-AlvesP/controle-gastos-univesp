@@ -1,74 +1,91 @@
+// TransacaoScreen.js
 import React, { useState } from 'react';
-import { View, Text, TextInput, Button, StyleSheet, Alert } from 'react-native';
-import { Picker } from '@react-native-picker/picker';
+import { View, Text, TextInput, Button, StyleSheet } from 'react-native';
+import { useTransactions } from '../contexts/TransactionsContext';
+import { Picker } from '@react-native-picker/picker'; // Importação correta do Picker
 
 export default function TransacaoScreen({ navigation }) {
-  const [tipo, setTipo] = useState('despesa');  // 'despesa' ou 'receita'
-  const [categoria, setCategoria] = useState('');
+  const { addTransaction } = useTransactions();
+  
+  const [descricao, setDescricao] = useState('');
   const [valor, setValor] = useState('');
-  const [data, setData] = useState(new Date().toISOString().slice(0, 10)); // Data atual no formato 'YYYY-MM-DD'
+  const [tipo, setTipo] = useState('receita');
+  const [categoria, setCategoria] = useState('Pagamento Mensal');
 
-  const handleSalvarTransacao = () => {
-    if (!categoria || !valor) {
-      Alert.alert('Erro', 'Por favor, preencha todos os campos.');
-      return;
+  const handleAddTransaction = () => {
+    if (descricao && valor && tipo && categoria) {
+      addTransaction({ descricao, valor, tipo, categoria });
+      navigation.goBack();
+    } else {
+      alert('Preencha todos os campos!');
     }
-
-    // Salvar transação (aqui, apenas exibimos no console)
-    console.log('Transação salva:', { tipo, categoria, valor, data });
-    
-    // Após salvar, podemos limpar os campos e voltar para a tela anterior
-    setTipo('despesa');
-    setCategoria('');
-    setValor('');
-    setData(new Date().toISOString().slice(0, 10));
-    navigation.goBack(); // Retorna para a tela inicial
   };
+
+  // Definindo as categorias de forma condicional
+  const categoriasDisponiveis = tipo === 'receita'
+    ? [
+        { label: 'Pagamento Mensal', value: 'Pagamento Mensal' },
+        { label: 'Renda Extra', value: 'Renda Extra' },
+      ]
+    : [
+        { label: 'Alimentação', value: 'Alimentação' },
+        { label: 'Transporte', value: 'Transporte' },
+        { label: 'Lazer', value: 'Lazer' },
+        { label: 'Saúde', value: 'Saúde' },
+        // Adicione mais categorias de despesa aqui
+      ];
 
   return (
     <View style={styles.container}>
-      <Text style={styles.title}>Adicionar Transação</Text>
+      <Text style={styles.header}>Adicionar Transação</Text>
 
-      <Text>Tipo de Transação:</Text>
-      <Picker
-        selectedValue={tipo}
-        onValueChange={(itemValue) => setTipo(itemValue)}
-        style={styles.picker}
-      >
-        <Picker.Item label="Despesa" value="despesa" />
-        <Picker.Item label="Receita" value="receita" />
-      </Picker>
-
-      <Text>Categorias:</Text>
-      <Picker
-        selectedValue={categoria}
-        onValueChange={(itemValue) => setCategoria(itemValue)}
-        style={styles.picker}
-      >
-        <Picker.Item label="Alimentação" value="alimentacao" />
-        <Picker.Item label="Transporte" value="transporte" />
-        <Picker.Item label="Lazer" value="lazer" />
-        <Picker.Item label="Saúde" value="saude" />
-      </Picker>
-
-      <Text>Valor:</Text>
+      <Text>Descrição</Text>
       <TextInput
         style={styles.input}
-        keyboardType="numeric"
-        placeholder="Digite o valor"
+        value={descricao}
+        onChangeText={setDescricao}
+        placeholder="Ex: Jantar"
+      />
+
+      <Text>Valor</Text>
+      <TextInput
+        style={styles.input}
         value={valor}
         onChangeText={setValor}
+        placeholder="Ex: 50.00"
+        keyboardType="numeric"
       />
 
-      <Text>Data:</Text>
-      <TextInput
+      <Text>Tipo</Text>
+      <Picker
+        selectedValue={tipo}
         style={styles.input}
-        placeholder="Data"
-        value={data}
-        onChangeText={setData}
-      />
+        onValueChange={(itemValue) => {
+          setTipo(itemValue);
+          // Atualiza a categoria automaticamente quando mudar o tipo
+          if (itemValue === 'receita') {
+            setCategoria('Pagamento Mensal');
+          } else {
+            setCategoria('Alimentação');
+          }
+        }}
+      >
+        <Picker.Item label="Receita" value="receita" />
+        <Picker.Item label="Despesa" value="despesa" />
+      </Picker>
 
-      <Button title="Salvar Transação" onPress={handleSalvarTransacao} />
+      <Text>Categoria</Text>
+      <Picker
+        selectedValue={categoria}
+        style={styles.input}
+        onValueChange={(itemValue) => setCategoria(itemValue)}
+      >
+        {categoriasDisponiveis.map((cat) => (
+          <Picker.Item key={cat.value} label={cat.label} value={cat.value} />
+        ))}
+      </Picker>
+
+      <Button title="Adicionar Transação" onPress={handleAddTransaction} />
     </View>
   );
 }
@@ -77,24 +94,19 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
     padding: 20,
+    justifyContent: 'center',
     backgroundColor: '#f5f5f5',
   },
-  title: {
+  header: {
     fontSize: 24,
     fontWeight: 'bold',
     marginBottom: 20,
   },
-  picker: {
-    height: 50,
-    width: '100%',
-    marginBottom: 15,
-  },
   input: {
-    height: 40,
-    borderColor: '#ccc',
     borderWidth: 1,
+    borderColor: '#ccc',
+    padding: 10,
+    marginBottom: 20,
     borderRadius: 5,
-    marginBottom: 15,
-    paddingHorizontal: 10,
   },
 });
