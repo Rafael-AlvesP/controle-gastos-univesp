@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { View, Text, TextInput, Button, StyleSheet, Alert } from 'react-native';
 import { Picker } from '@react-native-picker/picker';
+import axios from 'axios';
 
 export default function TransacaoScreen({ navigation }) {
   const [tipo, setTipo] = useState('despesa');  // 'despesa' ou 'receita'
